@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thai-song-player"
+version = "1.0.0"
+description = "macOS menu-bar app: speak a Thai song name, it plays the matching local file (local Whisper STT, no cloud)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "punn-ce-spsm" }]
+keywords = ["thai", "whisper", "speech-to-text", "macos", "menu-bar", "music"]
+dependencies = [
+    "pystray>=0.19.5",      # system tray / menu-bar icon
+    "Pillow>=10.0.0",       # tray icon image rendering
+    "pynput>=1.7.6",        # global hotkey
+    "sounddevice>=0.4.6",   # microphone capture
+    "scipy>=1.11.0",        # audio array helpers
+    "numpy>=1.24.0",        # audio buffers
+    "openai-whisper>=20231117",  # local Thai speech-to-text
+    "mutagen>=1.47.0",      # audio container/format detection
+    "thefuzz>=0.20.0",      # fuzzy song-name matching
+    "python-Levenshtein>=0.23.0",  # fast backend for thefuzz
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "pip-audit>=2.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/punn-ce-spsm/thai-song-player"
+Repository = "https://github.com/punn-ce-spsm/thai-song-player"
+
+[project.scripts]
+thai-song-player = "app:main"
+
+[tool.setuptools]
+py-modules = ["app", "recorder", "recognizer", "matcher", "player"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
