@@ -8,7 +8,6 @@ Windows hotkey: Ctrl+Shift+Space (or custom value in config.json)
 
 import json
 import os
-import platform
 import subprocess
 import sys
 import threading
@@ -21,8 +20,6 @@ import player
 import recorder
 import recognizer
 import matcher
-
-_IS_MAC = platform.system() == "Darwin"
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -44,7 +41,7 @@ STATE_COLORS = {
 DEFAULT_CONFIG: dict = {
     "song_folder": "",
     "threshold": 70,
-    "hotkey": "<cmd>+<shift>+<space>" if _IS_MAC else "<ctrl>+<shift>+<space>",
+    "hotkey": "<cmd>+<shift>+<space>",
     "always_listening": False,
 }
 
@@ -110,32 +107,19 @@ def _applescript_safe(text: str) -> str:
 def notify(subtitle: str, message: str) -> None:
     """Send a system notification (non-blocking)."""
     def _do():
-        if _IS_MAC:
-            safe_sub = _applescript_safe(subtitle)
-            safe_msg = _applescript_safe(message)
-            script = (
-                f'display notification "{safe_msg}" '
-                f'with title "Thai Song Player" subtitle "{safe_sub}"'
-            )
-            subprocess.run(["osascript", "-e", script], check=False)
-        else:
-            try:
-                from plyer import notification
-                notification.notify(
-                    title="Thai Song Player",
-                    message=f"{subtitle}: {message}",
-                    app_name="Thai Song Player",
-                    timeout=4,
-                )
-            except Exception:
-                pass  # Notifications are best-effort on Windows
+        safe_sub = _applescript_safe(subtitle)
+        safe_msg = _applescript_safe(message)
+        script = (
+            f'display notification "{safe_msg}" '
+            f'with title "Thai Song Player" subtitle "{safe_sub}"'
+        )
+        subprocess.run(["osascript", "-e", script], check=False)
     threading.Thread(target=_do, daemon=True).start()
 
 
 def pick_folder(prompt: str = "เลือกโฟลเดอร์เพลง:") -> str | None:
     """Show a native folder picker dialog. Returns path or None."""
-    if _IS_MAC:
-        script = f"""
+    script = f"""
 tell application "System Events"
     activate
 end tell
@@ -146,25 +130,9 @@ on error
     return ""
 end try
 """
-        result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
-        path = result.stdout.strip()
-        return path.rstrip("/") if path else None
-    else:
-        # Windows: use PowerShell FolderBrowserDialog (avoids tkinter/main-thread issues)
-        ps_script = (
-            "Add-Type -AssemblyName System.Windows.Forms; "
-            "$f = New-Object System.Windows.Forms.Form; "
-            "$f.TopMost = $true; "
-            "$d = New-Object System.Windows.Forms.FolderBrowserDialog; "
-            f'$d.Description = "{prompt}"; '
-            "if ($d.ShowDialog($f) -eq 'OK') { $d.SelectedPath }"
-        )
-        result = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", ps_script],
-            capture_output=True, text=True,
-        )
-        path = result.stdout.strip()
-        return path if path else None
+    result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+    path = result.stdout.strip()
+    return path.rstrip("/") if path else None
 
 
 # ---------------------------------------------------------------------------
@@ -235,10 +203,7 @@ class ThaiSongPlayerApp:
             self._hotkey_listener.daemon = True
             self._hotkey_listener.start()
         except Exception as e:
-            if _IS_MAC:
-                hint = "เปิดสิทธิ์ใน System Settings → Privacy & Security → Accessibility"
-            else:
-                hint = "ตรวจสอบรูปแบบ hotkey ใน config.json"
+            hint = "เปิดสิทธิ์ใน System Settings → Privacy & Security → Accessibility"
             print(
                 f"[hotkey] Could not register global hotkey {self.config.get('hotkey')!r}: {e}\n{hint}",
                 file=sys.stderr,
