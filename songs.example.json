@@ -1,0 +1,5 @@
+{
+  "_comment": "Optional: map spoken Thai names to actual filenames in your song_folder. Copy to songs.json to use.",
+  "_example": "ถ้าหากฉันมีปีก → Wings.mp3 (spoken Thai name → English filename)",
+  "ถ้าหากฉันมีปีก": "Wings.mp3"
+}
