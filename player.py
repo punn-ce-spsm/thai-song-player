@@ -48,7 +48,7 @@ def _resolve_play_path(filepath: str) -> tuple[str, str | None]:
     """
     Return (play_path, temp_file_to_cleanup).
     If the declared extension doesn't match the actual format, create a
-    temp file with the correct extension (symlink on macOS, copy on Windows).
+    temp symlink with the correct extension (zero-copy, no admin needed).
     """
     declared_ext = os.path.splitext(filepath)[1].lower()
     actual_ext = _detect_extension(filepath)
