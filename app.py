@@ -16,10 +16,10 @@ import time
 import pystray
 from PIL import Image, ImageDraw
 
-import player
-import recorder
-import recognizer
 import matcher
+import player
+import recognizer
+import recorder
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -205,7 +205,8 @@ class ThaiSongPlayerApp:
         except Exception as e:
             hint = "เปิดสิทธิ์ใน System Settings → Privacy & Security → Accessibility"
             print(
-                f"[hotkey] Could not register global hotkey {self.config.get('hotkey')!r}: {e}\n{hint}",
+                f"[hotkey] Could not register global hotkey"
+                f" {self.config.get('hotkey')!r}: {e}\n{hint}",
                 file=sys.stderr,
             )
             notify("Hotkey ไม่ทำงาน", hint)

@@ -2,10 +2,11 @@
 matcher.py — Fuzzy matching of a Thai query against a library of song names.
 """
 
-import os
 import json
+import os
 
-from thefuzz import fuzz, process as fuzz_process
+from thefuzz import fuzz
+from thefuzz import process as fuzz_process
 
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".flac", ".aac", ".ogg", ".opus"}
 

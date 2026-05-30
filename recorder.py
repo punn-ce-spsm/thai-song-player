@@ -64,7 +64,8 @@ def record_audio() -> tuple[np.ndarray | None, str | None]:
                     return None, "ไม่ได้ยินเสียงพูด กรุณาลองใหม่"
 
                 # Stop early: speech detected, then silence
-                if speech_chunks >= min_speech_chunks and consecutive_silence >= silence_stop_chunks:
+                silence_done = consecutive_silence >= silence_stop_chunks
+                if speech_chunks >= min_speech_chunks and silence_done:
                     break
 
     except sd.PortAudioError as e:
