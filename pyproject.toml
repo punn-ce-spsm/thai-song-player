@@ -9,7 +9,7 @@ description = "macOS menu-bar app: speak a Thai song name, it plays the matching
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "punn-ce-spsm" }]
+authors = [{ name = "Punnawich Vanadilok" }]
 keywords = ["thai", "whisper", "speech-to-text", "macos", "menu-bar", "music"]
 dependencies = [
     "pystray>=0.19.5",      # system tray / menu-bar icon

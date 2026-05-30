@@ -6,7 +6,7 @@ A macOS menu-bar app: press a global hotkey, **speak a Thai song name**, and it 
 
 > _แอปบนแถบเมนู macOS: กดปุ่มลัด พูดชื่อเพลงภาษาไทย แล้วแอปจะเล่นไฟล์เพลงในเครื่องที่ตรงกัน — ประมวลผลเสียงในเครื่องทั้งหมด_
 
-![demo](docs/demo.gif) <!-- TODO: add a screenshot or GIF -->
+![Thai Song Player menu-bar app](docs/demo.png)
 
 ## Install
 
@@ -100,4 +100,4 @@ make clean   # remove venv & caches
 
 ## License
 
-[MIT](LICENSE) © punn-ce-spsm
+[MIT](LICENSE) © Punnawich Vanadilok
