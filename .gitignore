@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+
+# Personal runtime config (never commit — contains local paths)
+config.json
+songs.json
+
+# macOS
+.DS_Store
