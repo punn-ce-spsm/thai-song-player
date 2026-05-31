@@ -22,14 +22,27 @@ def load_songs(song_folder: str, songs_json_path: str | None = None) -> dict[str
     songs: dict[str, str] = {}
 
     if song_folder and os.path.isdir(song_folder):
+        scan_root = os.path.realpath(song_folder)
         for filename in os.listdir(song_folder):
             stem, ext = os.path.splitext(filename)
-            if ext.lower() in AUDIO_EXTENSIONS:
-                songs[stem] = os.path.join(song_folder, filename)
+            if ext.lower() not in AUDIO_EXTENSIONS:
+                continue
+            filepath = os.path.join(song_folder, filename)
+            # Contain symlinks: skip any entry that resolves outside the
+            # song folder so a planted symlink can't feed afplay/mutagen an
+            # arbitrary file the user can read.
+            if not os.path.realpath(filepath).startswith(scan_root + os.sep):
+                continue
+            songs[stem] = filepath
 
     # Overlay songs.json mappings
     if songs_json_path and os.path.isfile(songs_json_path):
         try:
+            # Cap size — songs.json is re-read every pipeline cycle, so an
+            # oversized file would stall recognition (DoS). 1 MB is generous
+            # for a spoken-name → filename map.
+            if os.path.getsize(songs_json_path) > 1_000_000:
+                raise OSError("songs.json exceeds 1 MB size cap")
             with open(songs_json_path, "r", encoding="utf-8") as f:
                 mapping: dict[str, str] = json.load(f)
             # Resolve song_folder once for traversal checks

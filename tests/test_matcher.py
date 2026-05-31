@@ -79,3 +79,35 @@ def test_songs_json_comment_keys_skipped(tmp_path):
 
     assert "_comment" not in songs
     assert "real" in songs
+
+
+def test_directory_scan_rejects_symlink_escaping_folder(tmp_path):
+    # A symlink inside the song folder pointing OUTSIDE must not be indexed,
+    # while a normal audio file in the folder still is.
+    song_dir = tmp_path / "songs"
+    song_dir.mkdir()
+    outside = tmp_path / "outside.mp3"
+    outside.write_bytes(b"\x00")
+    _make_song(str(song_dir), "Real.mp3")
+    os.symlink(str(outside), str(song_dir / "evil.mp3"))
+
+    songs = matcher.load_songs(str(song_dir))
+
+    assert "Real" in songs
+    assert "evil" not in songs
+
+
+def test_oversized_songs_json_is_ignored(tmp_path):
+    d = str(tmp_path)
+    _make_song(d, "Wings.mp3")
+    songs_json = tmp_path / "songs.json"
+    # Build a valid-but-oversized (>1 MB) mapping; it must be skipped, not parsed.
+    big = {f"name{i}": "Wings.mp3" for i in range(60000)}
+    songs_json.write_text(json.dumps(big), encoding="utf-8")
+    assert songs_json.stat().st_size > 1_000_000
+
+    songs = matcher.load_songs(d, str(songs_json))
+
+    # Directory scan still works; the oversized overlay is ignored.
+    assert "Wings" in songs
+    assert "name0" not in songs
