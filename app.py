@@ -57,6 +57,11 @@ _SILENT_CYCLE_MARKERS = (
 def _is_silent_cycle_error(err: str | None) -> bool:
     return bool(err) and any(m in err for m in _SILENT_CYCLE_MARKERS)
 
+# Cooldown after a real recording failure (mic denied / device busy) while in
+# always-listening mode, so the loop can't retry tightly and spin the audio
+# subsystem. Does not apply to normal silent (no-speech) cycles.
+_ALWAYS_LISTEN_ERROR_COOLDOWN_SEC = 3.0
+
 # ---------------------------------------------------------------------------
 # Tray icon helpers
 # ---------------------------------------------------------------------------
@@ -96,8 +101,14 @@ def save_config(cfg: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def _applescript_safe(text: str) -> str:
-    """Strip control characters to prevent AppleScript injection."""
-    return "".join(ch for ch in text if ch >= " " or ch in "\t\n").replace('"', "'")
+    """Sanitize text for safe interpolation into an AppleScript string literal.
+
+    Drops all control characters (including newlines and tabs), escapes
+    backslashes, then escapes double quotes — in that order — so attacker-
+    influenced text cannot break out of the surrounding string literal.
+    """
+    printable = "".join(ch for ch in text if ch >= " ")
+    return printable.replace("\\", "\\\\").replace('"', '\\"')
 
 
 # ---------------------------------------------------------------------------
@@ -105,15 +116,27 @@ def _applescript_safe(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 def notify(subtitle: str, message: str) -> None:
-    """Send a system notification (non-blocking)."""
+    """Send a system notification (non-blocking).
+
+    The dynamic subtitle/message (which may include attacker-influenced text
+    such as song names or transcripts) are passed as arguments to an
+    ``on run`` handler rather than interpolated into the script source, so
+    they are always treated as inert data and cannot inject AppleScript.
+    """
     def _do():
-        safe_sub = _applescript_safe(subtitle)
-        safe_msg = _applescript_safe(message)
-        script = (
-            f'display notification "{safe_msg}" '
-            f'with title "Thai Song Player" subtitle "{safe_sub}"'
+        subprocess.run(
+            [
+                "osascript",
+                "-e", "on run {subtitleArg, messageArg}",
+                "-e", (
+                    'display notification messageArg '
+                    'with title "Thai Song Player" subtitle subtitleArg'
+                ),
+                "-e", "end run",
+                subtitle, message,
+            ],
+            check=False,
         )
-        subprocess.run(["osascript", "-e", script], check=False)
     threading.Thread(target=_do, daemon=True).start()
 
 
@@ -296,9 +319,15 @@ class ThaiSongPlayerApp:
         audio, error = recorder.record_audio()
 
         if error or audio is None:
-            self._set_state("idle")
             if not (always_on and _is_silent_cycle_error(error)):
                 notify("บันทึกเสียงล้มเหลว", error or "ไม่ทราบสาเหตุ")
+                if always_on:
+                    # Hold the (already-claimed) listening state during the
+                    # cooldown so the always-listening poll loop can't re-enter
+                    # and spin on a persistent failure. Normal silent cycles
+                    # skip this and retry promptly.
+                    time.sleep(_ALWAYS_LISTEN_ERROR_COOLDOWN_SEC)
+            self._set_state("idle")
             return
 
         # --- 2. Transcribe ---------------------------------------------------
