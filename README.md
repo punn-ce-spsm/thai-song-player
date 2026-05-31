@@ -60,10 +60,12 @@ cp config.example.json config.json
 
 ## Security & Privacy
 
-- **Everything runs locally.** Audio and transcripts never leave your machine.
-- **Only network call:** the one-time Whisper `base` model download on first run.
-- **Least privilege:** the app uses exactly two permissions (Microphone, Accessibility) and explains why above.
-- **Hardening:** AppleScript inputs are sanitised; `songs.json` paths are confined to the song folder (no path traversal); temp files use random names.
+- **No data collection.** The app collects, stores, logs, and transmits **nothing**. Microphone audio is processed in memory and discarded after each recognition; it is never written to disk or sent anywhere. There is no telemetry or analytics.
+- **Everything runs locally.** Recording, transcription (Whisper), matching, and playback all happen on your machine.
+- **Only network call:** the one-time Whisper `base` model download on first run (from OpenAI's CDN, integrity-checked via SHA-256).
+- **Always-listening mode** processes ambient audio continuously, but the same way — locally and ephemerally, with nothing retained. Leave it off if others are nearby and you'd rather not have the mic open.
+- **Least privilege:** the app uses exactly two permissions (Microphone, Accessibility), each explained above; macOS mediates your consent.
+- **Hardening:** notification text is passed to `osascript` as arguments (no AppleScript injection); the song folder and `songs.json` paths are containment-checked (no path traversal, no symlink escape); temp files use random names.
 
 ## Architecture
 
@@ -101,3 +103,7 @@ make clean   # remove venv & caches
 ## License
 
 [MIT](LICENSE) © Punnawich Vanadilok
+
+Runtime dependencies carry their own licenses (including GPL/LGPL components) — see
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). They are installed via `pip` and
+not redistributed here, so this project's source stays MIT.
