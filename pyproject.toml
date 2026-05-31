@@ -20,8 +20,7 @@ dependencies = [
     "numpy>=1.24.0",        # audio buffers
     "openai-whisper>=20231117",  # local Thai speech-to-text
     "mutagen>=1.47.0",      # audio container/format detection
-    "thefuzz>=0.20.0",      # fuzzy song-name matching
-    "python-Levenshtein>=0.23.0",  # fast backend for thefuzz
+    "thefuzz>=0.22.0",      # fuzzy song-name matching (uses rapidfuzz/MIT backend)
 ]
 
 [project.optional-dependencies]
